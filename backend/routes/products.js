@@ -57,18 +57,44 @@ const products = [
 
 // Get list of products products
 router.get('/', (req, res, next) => {
-  // Return a list of dummy products
-  // Later, this data will be fetched from MongoDB
-  const queryPage = req.query.page;
-  const pageSize = 5;
-  let resultProducts = [...products];
-  if (queryPage) {
-    resultProducts = products.slice(
-      (queryPage - 1) * pageSize,
-      queryPage * pageSize
-    );
-  }
-  res.json(resultProducts);
+  // // Return a list of dummy products
+  // // Later, this data will be fetched from MongoDB
+  // const queryPage = req.query.page;
+  // const pageSize = 5;
+  // let resultProducts = [...products];
+  // if (queryPage) {
+  //   resultProducts = products.slice(
+  //     (queryPage - 1) * pageSize,
+  //     queryPage * pageSize
+  //   );
+  // }
+  MongoClient.connect('mongodb+srv://user:user@cluster0.80yhv.mongodb.net/shop?retryWrites=true&w=majority')
+.then(client => {
+  const products = [];
+  client.db().collection('products').find().forEach(
+    productDoc => {
+      productDoc.price = productDoc.price.toString();
+      products.push(productDoc);
+  })
+  .then(result => {
+    client.close();
+    res.status(200).json(products);
+  })
+  .catch(err => {
+    console.log(err);
+    client.close();
+    res
+    .status(500)
+    .json({ message: 'An error Occured' });
+  });
+  client.close(); 
+})
+.catch(err => {
+  console.log(err);
+  res
+  .status(500)
+  .json({ message: 'An error Occured' });
+});
 });
 
 // Get single product
@@ -100,13 +126,16 @@ MongoClient.connect('mongodb+srv://user:user@cluster0.80yhv.mongodb.net/shop?ret
     console.log(err);
     client.close();
     res
-    .status(201)
+    .status(500)
     .json({ message: 'An error Occured' });
   });
   client.close(); 
 })
 .catch(err => {
   console.log(err);
+  res
+  .status(500)
+  .json({ message: 'An error Occured' });
 });
 });
 
